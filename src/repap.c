@@ -37,7 +37,7 @@ void repap_terminate() {
 }
 
 void create_window(window ret, unsigned int width,
-        unsigned int height, const char *window_name, unsigned int bg_color) {
+        unsigned int height, const char *window_name, unsigned int bg_color, float fps_max) {
     static unsigned int is_glad = 0;
     unsigned int vshader = 0, fshader = 0;
     int success=0;
@@ -104,9 +104,8 @@ void create_window(window ret, unsigned int width,
     *((unsigned int*)(ret + win_height)) = height;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-    
-
-
+    *((char***)(ret + win_font)) = NULL;
+    *(float*)(ret + win_fps_max) = fps_max;
 }
 
 void destroy_window(window ret) {
@@ -130,12 +129,15 @@ void win_make_current(window win) {
 }
 
 void winloop_func(window win) {
-    static float ltime = 0;
+    static float ltime = 0, lframetime = 0;
     if(ltime == 0) ltime = glfwGetTime();
-    glfwSwapBuffers(*((GLFWwindow**)(win + win_winp)));
     glfwPollEvents();
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    if((glfwGetTime() - lframetime) >= 1 / *((float*)(win + win_fps_max))) {
+        glfwSwapBuffers(*((GLFWwindow**)(win + win_winp)));
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        lframetime = glfwGetTime();
+    }
     *((float *)(win + win_deltatime)) = glfwGetTime() - ltime;
     ltime = glfwGetTime();
     
@@ -180,9 +182,39 @@ void win_draw_sprite(window win, unsigned int x, unsigned int y, spt sprite) {
         }
     }
 }
+void win_draw_letter(window win, unsigned int x, unsigned int y, char oletter,
+        unsigned int color) {
+    unsigned int i, j;
+    char *letter;
+    printf("hello\n");
+    letter = (*(char**)(win + win_font))+oletter*8;
+    for(i=0; i<8; i++) {
+        printf("%x: ", letter[i]);
+        for(j=0; j<8; j++) {
+            printf("%d", (letter[7-i] >> (7-j)) & 1);
+            putpixel(win, j+x, i+y, color * ((letter[7-i] >> (7-j)) & 1));
+        }
+        printf("\n");
+    }
+    
+    
+}
 void update_window(window win) {
     glBindTexture(GL_TEXTURE_2D, *((unsigned int*)(win + win_texture)));
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, *((unsigned int*)(win + win_width)),
         *((unsigned int*)(win + win_height)), GL_RGBA, GL_UNSIGNED_BYTE,
         *((char**)(win + win_pixels)));
+}
+
+void font_from_file(const char *filepath, char ret[0xFF*8]) {
+    FILE *fp;
+    fp = fopen(filepath, "r");
+    if(fp == NULL) {
+        printf("font (%s) doesnt exist\n", filepath);
+    }
+    fread(ret, 1, 0xFF*8, fp);
+    fclose(fp);
+}
+void win_load_font(window win, char font[0xFF*8]) {
+    *(char**)(win + win_font) = font;
 }

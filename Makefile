@@ -5,7 +5,6 @@ test: src/test/test.c
 	    src/repap.c\
 		src/inc/glad.c\
 	    -o src/test/test -lglfw -funsigned-char
-	src/test/test
 stest: _build src/test/test.c
 	gcc src/test/test.c -lrepap -funsigned-char -o build/test
 	build/test

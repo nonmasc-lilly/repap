@@ -18,7 +18,7 @@ applications in assembly.
 int main(int argc, char **argv) {
     window win;
     repap_init();
-    create_window(win, 400, 400, "HELLO WINDOW!", 0x22EE11FF);
+    create_window(win, 400, 400, "HELLO WINDOW!", 0x22EE11FF, 60);
     win_make_current(win);
     win_draw_rect(win, 100, 100, 300, 300, 0xFFFFFFFF);
     update_window(win);
@@ -45,7 +45,7 @@ it is also reccomended that all files interacting with repap use
 
 here are the two main structures in repap:
 
-`char window[47]` and `char spt[16]`
+`char window[59]` and `char spt[16]`
 
 which are made up of the following:
 
@@ -61,6 +61,8 @@ window {
     width; // window width 4 bytes
     height; // window height 4 bytes
     deltatime; // time between window draw frames 4 bytes
+    *font; // active window font, 8 bytes uninitialized by default
+    fps_max; // maximum rendering fps for the window 4 bytes
 }
 sprite {
     *pixels; //sprite pixels 8 bytes
@@ -98,11 +100,13 @@ void create_window(
     unsigned int width,
     unsigned int height,
     const char *window_name,
-    unsigned int bg_color);
+    unsigned int bg_color,
+    float fps_max);
 ```
 
 creates a new window of size `width` x `height`, with name
-`window name` and with the background color of `bg_color`
+`window name`, with the background color of `bg_color`,
+and with the maximum fps of `fps_max`
 
 `ret` is the window created by `create_window`
 
@@ -132,6 +136,11 @@ void winloop_func(window win);
 
 clears the screen, polls for input, draws `win` to the
 screen and sets `win`s `deltatime` to be called every frame
+
+draws frames at the speed defined by `win`s `fps_max` or slower
+this does not stall the program, meaning all other logic will
+not be halted waiting for the window draw to sync up
+*stares at vsync furiously*
 
 ```C
 float win_get_deltatime(window win);
@@ -182,10 +191,26 @@ at offset `off+len`
 
 ```C
 void win_draw_rect(window win, unsigned int x, unsigned int y,
+    unsigned int width, unsigned int height);
+```
+
+draws a rectangle at (x, y) extending into the top right direction
+by (width, height)
+
+```C
+void win_draw_sprite(window win, unsigned int x, unsigned int y,
     spt sprite);
 ```
 
 draws `spt` onto `win` at `(x,y)`
+
+```C
+void win_draw_letter(window win, unsigned int x, unsigned int y,
+    char oletter, unsigned int color);
+```
+
+draws the letter `oleter` onto window at (x,y) from the bottom
+left corner, with color `color`.
 
 ```C
 void update_window(window win);
@@ -193,6 +218,21 @@ void update_window(window win);
 
 takes the `pixels` of `win` and make them visible to opengl.
 
+```C
+void font_from_file(const char *filepath, char ret[0xFF*8]);
+```
 
+loads a font from a `compact font design` file, fonts are
+written in a similar way to the Commodore 64 fonts, being
+8x8 in size and taking up only 8 bytes, each pixel being
+represented by a simple bit. The font is loaded from
+file at path `filepath` into bytearray `ret`
+
+```C
+void win_load_font(window win, char font[0xFF*8]);
+```
+
+loads a font `font` (loaded by font\_from\_file) into `win`
+for use with `win_draw_letter`
 
 

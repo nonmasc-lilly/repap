@@ -270,6 +270,51 @@ in case of `ct == CT_CHECK_INPUT` returns a byte with the smallest bit
 set if there is a new item on the stack, and the highest bit set if their
 is still unreadinput on the stack.
 
+PAPSCII is the encoding of returned input characters, the first 127 values
+are the same as ascii but onwards from that there are
+
+```C
+typedef enum {
+    PAP_INSERT = 128,
+    PAP_RIGHT  = 129,
+    PAP_LEFT   = 130,
+    PAP_DOWN   = 131,
+    PAP_UP     = 132,
+    PAP_PGUP   = 133,
+    PAP_PGDOWN = 134,
+    PAP_HOME   = 135,
+    PAP_END    = 136,
+    PAP_SCLCK  = 137,
+    PAP_PRSCR  = 138,
+    PAP_PAUSE  = 139,
+    PAP_F1     = 140,
+    PAP_F2     = 141,
+    PAP_F3     = 142,
+    PAP_F4     = 143,
+    PAP_F5     = 144,
+    PAP_F6     = 145,
+    PAP_F7     = 146,
+    PAP_F8     = 147,
+    PAP_F9     = 148,
+    PAP_F10    = 149,
+    PAP_F11    = 150,
+    PAP_F12    = 151,
+    PAP_F13    = 152,
+    PAP_F14    = 153,
+    PAP_F15    = 154,
+    PAP_F16    = 155,
+    PAP_F17    = 156,
+    PAP_F18    = 157,
+    PAP_F19    = 158,
+    PAP_F20    = 159,
+    PAP_F21    = 161,
+    PAP_F22    = 162,
+    PAP_F23    = 163,
+    PAP_F24    = 164,
+    PAP_F25    = 165,
+    PAP_MENU   = 166,
+} PAPSCII;
+```
 
 ```C
 void default_key_callback(GLFWwindow*,int,int,int,int);

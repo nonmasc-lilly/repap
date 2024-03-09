@@ -254,7 +254,7 @@ long input_control(CONTROL_TYPE ct, void *a, RETURN_TYPE *rt) {
         return ret;
     case CT_CHECK_INPUT:
         *rt = RT_BYTE;
-        ret = (noinput << 1) | newinput;
+        ret = ((!noinput) << 1) | newinput;
         return ret;
     default:
         printf("undefined input control\n");

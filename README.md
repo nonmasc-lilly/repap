@@ -43,9 +43,12 @@ it is also reccomended that all files interacting with repap use
 
 ## Documentation
 
+NOTE: repap runs with unsigned char as default, this documentation
+will reflect that.
+
 here are the two main structures in repap:
 
-`char window[59]` and `char spt[16]`
+`char window[67]` and `char spt[16]`
 
 which are made up of the following:
 
@@ -63,6 +66,7 @@ window {
     deltatime; // time between window draw frames 4 bytes
     *font; // active window font, 8 bytes uninitialized by default
     fps_max; // maximum rendering fps for the window 4 bytes
+    win_inp_stack; // a 10 unsigned short long stack where input will be stored
 }
 sprite {
     *pixels; //sprite pixels 8 bytes
@@ -71,13 +75,23 @@ sprite {
 }
 ```
 
-repap also has one defined type:
+repap also has a few defined type:
 
 ```C
 typedef enum {
     REFALSE=0,
     RETRUE=1
-} REBOOL;
+} REBOOL; // for use in boolean operations
+typedef enum {
+    CT_ASSIGN_WINDOW_CURRENT,
+    CT_PUSH_INPUT,
+    CT_CHECK_INPUT
+} CONTROL_TYPE; // a control type for use with control functions
+typedef enum {
+    RT_VOID,
+    RT_BYTE,
+    RT_PAPSCII,
+} RETURN_TYPE; // a return type for use with control functions
 ```
 
 the functions of repap are as follows:
@@ -123,10 +137,10 @@ frees all of the components of `ret` from memory, making ret
 unusable in the process.
 
 ```C
-void win_make_current(window win);
+void win_make_current(window *win);
 ```
 
-sets all of the applicable opengl settings to use `win` as
+sets all of the applicable opengl settings to use `*win` as
 the current (vao, background color, current shader, as well
 as calling glfwMakeContext current on `win`s `winp`
 
@@ -234,5 +248,34 @@ void win_load_font(window win, char font[0xFF*8]);
 
 loads a font `font` (loaded by font\_from\_file) into `win`
 for use with `win_draw_letter`
+
+```C
+long input_control(CONTROL_TYPE ct, void *a, RETURN_TYPE *rt);
+```
+
+when called, enacts the desired control type (in `ct) taking
+paramater `a` returning a long encoded as the type placed in
+`*rt` by the function.
+
+in case of `ct == CT_ASSIGN_WINDOW_CURRENT` the window value stored at `a`
+will be stored as the current window. This is done by `win_make_current`
+
+in case of `ct == CT_PUSH_INPUT` pushes the unsigned short value stored
+at `a` to the input stack
+
+in case of `ct == CT_POP_INPUT` pops the top of the input stack off and
+returns it
+
+in case of `ct == CT_CHECK_INPUT` returns a byte with the smallest bit
+set if there is a new item on the stack, and the highest bit set if their
+is still unreadinput on the stack.
+
+
+```C
+void default_key_callback(GLFWwindow*,int,int,int,int);
+```
+
+the key callback passed to glfw on glad initialization
+
 
 
